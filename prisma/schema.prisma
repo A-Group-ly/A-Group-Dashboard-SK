@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id               String          @id @default(uuid())
+  email            String          @unique
+  name             String
+  stripeCustomerId String?         @unique
+  paymentMethods   PaymentMethod[]
+  subscriptions    Subscription[]
+  createdAt        DateTime        @default(now())
+}
+
+model PaymentMethod {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeMethodId String         @unique
+  brand          String
+  last4          String
+  expMonth       Int
+  expYear        Int
+  isDefault      Boolean        @default(false)
+  subscriptions  Subscription[]
+  createdAt      DateTime       @default(now())
+}
+
+model Subscription {
+  id                 String         @id @default(uuid())
+  userId             String
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planName           String
+  price              Float
+  status             String         @default("ACTIVE")
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  paymentMethodId    String?
+  paymentMethod      PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  notifiedForRenewal Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+}
